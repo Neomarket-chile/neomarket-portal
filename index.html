@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NEOMARKET — Portal de Clientes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://zrdzctlgcqaqyustwyry.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyZHpjdGxnY3FhcXl1c3R3eXJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NzUzMjUsImV4cCI6MjA5NjI1MTMyNX0.Nw0Lqt8NKu8K2Cko4pYulOOs-qIrQ-N-vVBhmL5Qe5Y';
+  </script>
+<style>
+:root{
+  --bg:#FFFFFF;--text:#0E0D0C;--border:#0E0D0C;
+  --gray-dk:#6B6660;--gray-lt:#9A9590;--dark:#1C1A18;--off-wh:#FDF8F7;
+  --serif:'Cormorant Garamond',serif;--sans:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+  --bw:2px;--tf:.2s cubic-bezier(.25,1,.5,1);--success:#2b7a3e;--error:#c62828;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.02em;}
+.screen{display:none!important;}
+.screen.active{display:block!important;}
+.flex-screen{display:none!important;}
+.flex-screen.active{display:flex!important;}
+.tag{font-family:var(--mono);font-size:.75rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:3px;display:inline-block;margin-bottom:.75rem;}
+.divider{width:100%;height:var(--bw);background:var(--border);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-weight:500;padding:.75rem 1.6rem;border:var(--bw) solid var(--border);font-size:.95rem;cursor:pointer;transition:var(--tf);text-decoration:none;background:transparent;color:var(--text);}
+.btn-primary{background:var(--text);color:var(--bg);}
+.btn-primary:hover{background:var(--bg);color:var(--text);transform:translate(-3px,-3px);box-shadow:3px 3px 0 var(--text);}
+.btn-secondary:hover{background:var(--text);color:var(--bg);transform:translate(-3px,-3px);box-shadow:3px 3px 0 var(--text);}
+.btn-ghost{border-color:transparent;color:var(--gray-dk);padding:.5rem .75rem;font-size:.85rem;}
+.btn-ghost:hover{color:var(--text);border-color:var(--border);}
+.btn-danger{color:var(--error);border-color:var(--error);}
+.btn-danger:hover{background:var(--error);color:#fff;}
+.btn-sm{padding:.5rem 1rem;font-size:.85rem;}
+.btn-full{width:100%;}
+.spinner{display:none;width:16px;height:16px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+input,textarea,select{font-family:var(--sans);font-size:.95rem;color:var(--text);background:var(--bg);border:var(--bw) solid var(--border);padding:.75rem 1rem;outline:none;width:100%;transition:border-color var(--tf);}
+input:focus,textarea:focus,select:focus{border-color:var(--gray-lt);}
+textarea{resize:vertical;min-height:90px;}
+select{cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%230E0D0C' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+label{font-size:.78rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--gray-lt);display:block;margin-bottom:6px;}
+.field{margin-bottom:20px;}
+.fb{font-family:var(--mono);font-size:.8rem;margin-top:10px;display:none;}
+.fb.ok{display:block;color:var(--success);}
+.fb.err{display:block;color:var(--error);}
+
+/* NAV */
+.nav{height:64px;border-bottom:var(--bw) solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 48px;position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);z-index:100;}
+.nav-brand{display:flex;align-items:center;gap:10px;}
+.nav-logo{width:32px;height:32px;background:var(--text);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+.nav-logo svg{width:18px;height:18px;}
+.nav-name{font-weight:700;font-size:1rem;letter-spacing:.05em;}
+.nav-badge{font-family:var(--mono);font-size:.68rem;background:var(--off-wh);border:1px solid var(--border);padding:2px 8px;letter-spacing:.1em;}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.nav-user{font-size:.85rem;color:var(--gray-dk);}
+
+/* LOGIN */
+#screen-login{min-height:100vh;align-items:center;justify-content:center;}
+.login-wrap{width:100%;max-width:420px;padding:24px;}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:36px;}
+.login-logo-box{width:68px;height:68px;background:var(--text);border-radius:14px;display:flex;align-items:center;justify-content:center;}
+.login-logo-box svg{width:40px;height:40px;}
+.login-brand{font-weight:700;font-size:1.2rem;letter-spacing:.05em;text-align:center;}
+.login-sub{font-size:.9rem;color:var(--gray-dk);text-align:center;font-weight:300;}
+.login-card{border:var(--bw) solid var(--border);padding:36px;}
+.login-title{font-size:2rem;margin-bottom:6px;}
+.login-desc{font-size:.9rem;color:var(--gray-dk);font-weight:300;margin-bottom:28px;}
+
+/* CLIENT */
+#screen-client{min-height:100vh;}
+.client-body{max-width:880px;margin:0 auto;padding:56px 48px;}
+.client-hello{font-size:2.8rem;margin-bottom:6px;}
+.client-hello em{font-style:italic;font-weight:300;color:var(--gray-dk);}
+.client-proj{font-family:var(--mono);font-size:.82rem;color:var(--gray-lt);letter-spacing:.08em;margin-bottom:40px;}
+.info-row{display:grid;grid-template-columns:repeat(3,1fr);border:var(--bw) solid var(--border);margin-bottom:48px;}
+.info-cell{padding:18px 22px;border-right:var(--bw) solid var(--border);}
+.info-cell:last-child{border-right:none;}
+.info-lbl{font-family:var(--mono);font-size:.68rem;color:var(--gray-lt);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
+.info-val{font-size:.95rem;font-weight:500;}
+.status-badge{display:inline-flex;align-items:center;gap:6px;}
+.s-dot{width:8px;height:8px;border-radius:50%;}
+.s-proceso{background:#f59e0b;}.s-revision{background:#3b82f6;}.s-completado{background:#22c55e;}.s-pausa{background:#9A9590;}
+.prog-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
+.prog-title{font-size:1.5rem;}
+.prog-pct{font-family:var(--serif);font-size:2.5rem;font-weight:600;}
+.prog-track{height:5px;background:var(--off-wh);border:1px solid var(--border);}
+.prog-fill{height:100%;background:var(--text);transition:width .9s cubic-bezier(.25,1,.5,1);}
+.sec-gap{height:40px;}
+.sec-title{font-size:1.5rem;margin-bottom:20px;}
+.stage-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--off-wh);}
+.stage-row:last-child{border-bottom:none;}
+.s-check{width:22px;height:22px;border:var(--bw) solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.s-check.done{background:var(--text);}
+.s-check.done svg{display:block;}
+.s-check svg{display:none;width:13px;height:13px;}
+.s-num{font-family:var(--mono);font-size:.72rem;color:var(--gray-lt);width:22px;flex-shrink:0;}
+.s-name{font-size:.95rem;}
+.s-name.done{color:var(--gray-lt);text-decoration:line-through;}
+.files-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.file-card{border:var(--bw) solid var(--border);padding:14px;display:flex;flex-direction:column;gap:8px;color:inherit;text-decoration:none;transition:var(--tf);}
+.file-card:hover{transform:translate(-2px,-2px);box-shadow:2px 2px 0 var(--text);}
+.f-icon{font-size:1.6rem;}
+.f-name{font-size:.82rem;font-weight:500;word-break:break-word;}
+.f-date{font-family:var(--mono);font-size:.68rem;color:var(--gray-lt);}
+.f-empty{color:var(--gray-lt);font-size:.9rem;font-style:italic;}
+.notes-box{background:var(--off-wh);border:var(--bw) solid var(--border);padding:22px;font-size:.95rem;line-height:1.75;color:var(--gray-dk);white-space:pre-wrap;}
+
+/* ADMIN LAYOUT */
+#screen-admin{min-height:100vh;}
+.admin-wrap{display:grid;grid-template-columns:250px 1fr;min-height:calc(100vh - 64px);}
+.sidebar{border-right:var(--bw) solid var(--border);padding:28px 20px;}
+.sb-lbl{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.15em;color:var(--gray-lt);margin-bottom:10px;}
+.proj-list{display:flex;flex-direction:column;gap:2px;}
+.proj-item{padding:10px 12px;cursor:pointer;border:1px solid transparent;transition:var(--tf);}
+.proj-item:hover{border-color:var(--border);background:var(--off-wh);}
+.proj-item.sel{border-color:var(--border);background:var(--text);color:var(--bg);}
+.pi-name{font-size:.88rem;font-weight:500;}
+.pi-type{font-family:var(--mono);font-size:.64rem;opacity:.55;margin-top:2px;}
+.pi-status{font-size:.72rem;opacity:.5;}
+
+/* ADMIN MAIN */
+.admin-main{padding:40px 48px;}
+.admin-welcome{padding:40px 48px;}
+.ed-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:36px;gap:16px;}
+.ed-title{font-size:2.2rem;margin-bottom:4px;}
+.ed-client{font-family:var(--mono);font-size:.78rem;color:var(--gray-lt);}
+.ed-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;}
+.ed-full{grid-column:1/-1;}
+.stage-ed{display:flex;flex-direction:column;gap:6px;}
+.se-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border);cursor:pointer;transition:var(--tf);user-select:none;}
+.se-item:hover{background:var(--off-wh);}
+.se-item.done{background:var(--text);color:var(--bg);border-color:var(--text);}
+.se-check{width:18px;height:18px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.se-check svg{width:11px;height:11px;}
+.se-num{font-family:var(--mono);font-size:.68rem;opacity:.5;width:20px;}
+.prog-slider{-webkit-appearance:none;border:none;height:5px;background:var(--off-wh);outline:none;padding:0;cursor:pointer;border-bottom:1px solid var(--border);}
+.prog-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:var(--text);cursor:pointer;}
+.prog-val{font-family:var(--serif);font-size:2.2rem;font-weight:600;text-align:center;margin-bottom:6px;}
+
+/* FILES ADMIN */
+.file-url-row{display:flex;gap:8px;margin-bottom:8px;}
+.file-url-row input{flex:1;}
+.added-files{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.af-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border:1px solid var(--border);}
+.af-name{font-size:.85rem;font-weight:500;}
+.af-url{font-family:var(--mono);font-size:.68rem;color:var(--gray-lt);word-break:break-all;}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg);border:var(--bw) solid var(--border);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+.modal-hd{padding:22px 26px;border-bottom:var(--bw) solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:1.5rem;}
+.modal-bd{padding:26px;}
+.modal-ft{padding:18px 26px;border-top:var(--bw) solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+@media(max-width:768px){
+  .nav{padding:0 20px;}
+  .client-body{padding:32px 20px;}
+  .info-row{grid-template-columns:1fr;}
+  .info-cell{border-right:none;border-bottom:var(--bw) solid var(--border);}
+  .info-cell:last-child{border-bottom:none;}
+  .admin-wrap{grid-template-columns:1fr;}
+  .sidebar{border-right:none;border-bottom:var(--bw) solid var(--border);}
+  .admin-main,.admin-welcome{padding:24px 20px;}
+  .ed-grid{grid-template-columns:1fr;}
+  .files-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="flex-screen">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-logo-box">
+        <svg viewBox="0 0 40 40" fill="none">
+          <path d="M8 32L8 8L32 32L32 8" stroke="#F5F0E8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="login-brand">NEOMARKET</div>
+      <div class="login-sub">Portal de Clientes</div>
+    </div>
+    <div class="login-card">
+      <div class="tag">Acceso seguro</div>
+      <h1 class="login-title">Bienvenido</h1>
+      <p class="login-desc">Ingresa tus credenciales para ver el avance de tu proyecto.</p>
+      <form id="login-form">
+        <div class="field">
+          <label for="l-email">Correo electrónico</label>
+          <input type="email" id="l-email" placeholder="tu@correo.com" required/>
+        </div>
+        <div class="field">
+          <label for="l-pass">Contraseña</label>
+          <input type="password" id="l-pass" placeholder="••••••••" required/>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+          Ingresar <span class="spinner" id="login-sp"></span>
+        </button>
+        <div class="fb" id="login-fb"></div>
+      </form>
+    </div>
+    <p style="text-align:center;font-size:.8rem;color:var(--gray-lt);margin-top:18px;">¿Problemas para ingresar?<br>neomarket.chile@neomarket-chile.com</p>
+  </div>
+</div>
+
+<!-- CLIENT -->
+<div id="screen-client" class="screen">
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo"><svg viewBox="0 0 40 40" fill="none"><path d="M8 32L8 8L32 32L32 8" stroke="#F5F0E8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="nav-name">NEOMARKET</span>
+      <span class="nav-badge">PORTAL</span>
+    </div>
+    <div class="nav-right">
+      <span class="nav-user" id="c-nav-user"></span>
+      <button class="btn btn-ghost btn-sm" onclick="doSignOut()">Salir</button>
+    </div>
+  </nav>
+  <div class="divider"></div>
+  <div class="client-body">
+    <div class="tag">Tu proyecto</div>
+    <h1 class="client-hello">Hola, <em id="c-name"></em>.</h1>
+    <div class="client-proj" id="c-proj-label"></div>
+
+    <div class="info-row">
+      <div class="info-cell"><div class="info-lbl">Estado</div><div class="info-val" id="c-status"></div></div>
+      <div class="info-cell"><div class="info-lbl">Inicio</div><div class="info-val" id="c-start"></div></div>
+      <div class="info-cell"><div class="info-lbl">Entrega estimada</div><div class="info-val" id="c-delivery"></div></div>
+    </div>
+
+    <div class="prog-header"><h2 class="prog-title">Avance general</h2><span class="prog-pct" id="c-pct">0%</span></div>
+    <div class="prog-track"><div class="prog-fill" id="c-fill" style="width:0%"></div></div>
+
+    <div class="sec-gap"></div><div class="divider"></div><div class="sec-gap"></div>
+    <h2 class="sec-title">Etapas del proyecto</h2>
+    <div id="c-stages"></div>
+
+    <div class="sec-gap"></div><div class="divider"></div><div class="sec-gap"></div>
+    <h2 class="sec-title">Archivos e imágenes</h2>
+    <div class="files-grid" id="c-files"><p class="f-empty">Sin archivos por el momento.</p></div>
+
+    <div class="sec-gap"></div><div class="divider"></div><div class="sec-gap"></div>
+    <h2 class="sec-title">Notas de Neomarket</h2>
+    <div class="notes-box" id="c-notes"><span style="font-style:italic;color:var(--gray-lt);">Sin notas por el momento.</span></div>
+
+    <div class="sec-gap"></div><div class="divider"></div>
+    <div style="padding:28px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <span style="font-size:.85rem;color:var(--gray-dk);">¿Tienes alguna consulta?</span>
+      <span style="font-family:var(--mono);font-size:.78rem;color:var(--gray-lt);">neomarket.chile@neomarket-chile.com</span>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screen-admin" class="screen">
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nav-logo"><svg viewBox="0 0 40 40" fill="none"><path d="M8 32L8 8L32 32L32 8" stroke="#F5F0E8" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="nav-name">NEOMARKET</span>
+      <span class="nav-badge">ADMIN</span>
+    </div>
+    <div class="nav-right">
+      <button class="btn btn-primary btn-sm" onclick="openModal()">+ Nuevo proyecto</button>
+      <button class="btn btn-ghost btn-sm" onclick="doSignOut()">Salir</button>
+    </div>
+  </nav>
+  <div class="divider"></div>
+  <div class="admin-wrap">
+    <div class="sidebar">
+      <div class="sb-lbl">Proyectos</div>
+      <div class="proj-list" id="proj-list"><p style="font-size:.82rem;color:var(--gray-lt);">Sin proyectos aún.</p></div>
+    </div>
+    <div>
+      <!-- Welcome -->
+      <div class="admin-welcome" id="admin-welcome">
+        <div class="tag">Panel de administración</div>
+        <h2 style="font-size:2.4rem;margin-bottom:14px;">Bienvenido.</h2>
+        <p style="color:var(--gray-dk);max-width:460px;font-weight:300;">Selecciona un proyecto del panel izquierdo o crea uno nuevo.</p>
+      </div>
+      <!-- Editor -->
+      <div class="admin-main" id="admin-ed" style="display:none;">
+        <div class="ed-header">
+          <div>
+            <div class="tag" id="ed-type"></div>
+            <h2 class="ed-title" id="ed-proj-name"></h2>
+            <div class="ed-client" id="ed-client"></div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteProject()">Eliminar</button>
+        </div>
+        <div class="ed-grid">
+          <div>
+            <div class="field"><label>Estado</label>
+              <select id="ed-status">
+                <option value="proceso">🟡 En proceso</option>
+                <option value="revision">👀 En revisión</option>
+                <option value="completado">✅ Completado</option>
+                <option value="pausa">⏸️ En pausa</option>
+              </select>
+            </div>
+            <div class="field"><label>Fecha de inicio</label><input type="date" id="ed-start"/></div>
+            <div class="field"><label>Entrega estimada</label><input type="date" id="ed-delivery"/></div>
+          </div>
+          <div>
+            <label>Avance general</label>
+            <div class="prog-val" id="ed-prog-val">0%</div>
+            <input type="range" class="prog-slider btn-full" id="ed-prog" min="0" max="100" value="0"
+              oninput="document.getElementById('ed-prog-val').textContent=this.value+'%'"/>
+            <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:.68rem;color:var(--gray-lt);margin-top:4px;"><span>0%</span><span>100%</span></div>
+          </div>
+          <div class="ed-full">
+            <label>Etapas (clic para marcar completada)</label>
+            <div class="stage-ed" id="ed-stages"></div>
+          </div>
+          <div class="ed-full">
+            <div class="field"><label>Notas para el cliente</label>
+              <textarea id="ed-notes" placeholder="Actualizaciones o comentarios para el cliente..."></textarea>
+            </div>
+          </div>
+          <div class="ed-full">
+            <label>Archivos e imágenes (pega links de Google Drive o Dropbox)</label>
+            <div class="file-url-row">
+              <input type="text" id="new-file-url" placeholder="https://drive.google.com/..."/>
+              <input type="text" id="new-file-name" placeholder="Nombre del archivo" style="max-width:200px;"/>
+              <button class="btn btn-secondary btn-sm" onclick="addFileLink()">+ Agregar</button>
+            </div>
+            <div class="added-files" id="added-files"></div>
+          </div>
+          <div class="ed-full" style="display:flex;justify-content:flex-end;gap:10px;align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">Cancelar</button>
+            <button class="btn btn-primary" id="save-btn" onclick="saveProject()">
+              Guardar cambios <span class="spinner" id="save-sp"></span>
+            </button>
+            <div class="fb" id="save-fb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NUEVO PROYECTO -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 class="modal-title">Nuevo proyecto</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-bd">
+      <p style="font-size:.85rem;color:var(--gray-dk);margin-bottom:20px;font-weight:300;line-height:1.6;">
+        Primero crea el usuario en <strong>Supabase → Authentication → Add User</strong> con el correo y contraseña del cliente. Luego completa este formulario.
+      </p>
+      <div class="field"><label>Nombre del cliente</label><input type="text" id="nc-name" placeholder="Ej. Empresa ABC"/></div>
+      <div class="field"><label>Correo del cliente (debe coincidir con el de Supabase)</label><input type="email" id="nc-email" placeholder="cliente@empresa.cl"/></div>
+      <div class="field"><label>Nombre del proyecto</label><input type="text" id="nc-project" placeholder="Ej. Sitio web corporativo"/></div>
+      <div class="field"><label>Tipo de proyecto</label>
+        <select id="nc-type">
+          <option value="website">Sitio Web</option>
+          <option value="meta-ads">Campaña Meta Ads</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="create-btn" onclick="createProject()">
+        Crear proyecto <span class="spinner" id="create-sp"></span>
+      </button>
+    </div>
+    <div style="padding:0 26px 18px;"><div class="fb" id="create-fb"></div></div>
+  </div>
+</div>
+
+<script>
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const STAGES = {
+  website:  ['Crear estructura del sitio','Crear diseño','Rellenar información','Crear enlaces funcionales','Revisión','Entrega al cliente'],
+  'meta-ads':['Brief y estrategia','Creación de creatividades','Configuración de campaña','Lanzamiento de campaña','Monitoreo y optimización','Reporte de resultados']
+};
+const STATUS = {
+  proceso:{label:'En proceso',dot:'s-proceso'},
+  revision:{label:'En revisión',dot:'s-revision'},
+  completado:{label:'Completado',dot:'s-completado'},
+  pausa:{label:'En pausa',dot:'s-pausa'}
+};
+
+let currentId = null;
+let currentData = null;
+let allProjects = {};
+
+// ── UTILS ──
+function show(id,flex=false){
+  const el=document.getElementById(id);
+  if(flex){el.style.display='flex';}else{el.style.display='block';}
+}
+function hide(id){document.getElementById(id).style.display='none';}
+function showScreen(id){
+  ['screen-login','screen-client','screen-admin'].forEach(s=>{
+    const el=document.getElementById(s);
+    el.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+function setFb(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className='fb '+type;}
+function setSp(id,on){document.getElementById(id).style.display=on?'inline-block':'none';}
+function fmtDate(s){if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;}
+function fileIcon(name){
+  const e=(name||'').split('.').pop().toLowerCase();
+  if(['jpg','jpeg','png','gif','webp'].includes(e))return'🖼️';
+  if(e==='pdf')return'📄';if(['zip','rar'].includes(e))return'📦';
+  if(['doc','docx'].includes(e))return'📝';if(['xls','xlsx'].includes(e))return'📊';
+  return'📎';
+}
+
+// ── AUTH STATE ──
+sb.auth.onAuthStateChange(async(event, session)=>{
+  if(!session){showScreen('screen-login');return;}
+  const{data:profile}=await sb.from('profiles').select('*').eq('id',session.user.id).single();
+  if(!profile){showScreen('screen-login');return;}
+  if(profile.role==='admin'){await loadAdmin();}
+  else{await loadClient(profile,session.user);}
+});
+
+// ── LOGIN ──
+document.getElementById('login-form').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  setSp('login-sp',true);
+  document.getElementById('login-btn').disabled=true;
+  const{error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    setSp('login-sp',false);
+    document.getElementById('login-btn').disabled=false;
+    setFb('login-fb','Correo o contraseña incorrectos.','err');
+  }
+});
+
+// ── SIGN OUT ──
+window.doSignOut=async()=>{await sb.auth.signOut();showScreen('screen-login');};
+
+// ── CLIENT VIEW ──
+async function loadClient(profile,user){
+  showScreen('screen-client');
+  document.getElementById('c-nav-user').textContent=profile.name||user.email;
+  document.getElementById('c-name').textContent=(profile.name||'').split(' ')[0]||'';
+  const{data:proj}=await sb.from('projects').select('*').eq('client_email',user.email).single();
+  if(!proj){document.getElementById('c-proj-label').textContent='Sin proyecto asignado.';return;}
+  document.getElementById('c-proj-label').textContent=`${proj.project_name} · ${proj.project_type==='website'?'Sitio Web':'Meta Ads'}`;
+  const st=STATUS[proj.status]||STATUS.proceso;
+  document.getElementById('c-status').innerHTML=`<span class="status-badge"><span class="s-dot ${st.dot}"></span>${st.label}</span>`;
+  document.getElementById('c-start').textContent=fmtDate(proj.start_date);
+  document.getElementById('c-delivery').textContent=fmtDate(proj.delivery_date);
+  const pct=proj.progress||0;
+  document.getElementById('c-pct').textContent=pct+'%';
+  setTimeout(()=>{document.getElementById('c-fill').style.width=pct+'%';},120);
+  const stages=STAGES[proj.project_type]||STAGES.website;
+  const ss=proj.stages||{};
+  document.getElementById('c-stages').innerHTML=stages.map((s,i)=>{
+    const done=ss[`s${i}`]===true;
+    return`<div class="stage-row">
+      <div class="s-check ${done?'done':''}"><svg viewBox="0 0 13 13" fill="none"><path d="M2 6.5l3.5 3.5 5.5-5.5" stroke="#F5F0E8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="s-num">0${i+1}</div>
+      <div class="s-name ${done?'done':''}">${s}</div>
+    </div>`;
+  }).join('');
+  const files=proj.files||[];
+  const fg=document.getElementById('c-files');
+  if(files.length===0){fg.innerHTML='<p class="f-empty">Sin archivos por el momento.</p>';}
+  else{fg.innerHTML=files.map(f=>`<a class="file-card" href="${f.url}" target="_blank" rel="noopener"><div class="f-icon">${fileIcon(f.name)}</div><div class="f-name">${f.name}</div><div class="f-date">${f.date||''}</div></a>`).join('');}
+  const nb=document.getElementById('c-notes');
+  if(proj.notes){nb.textContent=proj.notes;}
+  else{nb.innerHTML='<span style="font-style:italic;color:var(--gray-lt);">Sin notas por el momento.</span>';}
+}
+
+// ── ADMIN VIEW ──
+async function loadAdmin(){
+  showScreen('screen-admin');
+  await refreshList();
+}
+async function refreshList(){
+  const{data}=await sb.from('projects').select('*').order('created_at',{ascending:false});
+  allProjects={};
+  (data||[]).forEach(p=>{allProjects[p.id]=p;});
+  renderList();
+}
+function renderList(){
+  const el=document.getElementById('proj-list');
+  const ids=Object.keys(allProjects);
+  if(!ids.length){el.innerHTML='<p style="font-size:.82rem;color:var(--gray-lt);">Sin proyectos aún.</p>';return;}
+  el.innerHTML=ids.map(id=>{
+    const p=allProjects[id];
+    const sel=id===currentId?'sel':'';
+    return`<div class="proj-item ${sel}" onclick="selectProj('${id}')">
+      <div class="pi-name">${p.client_name}</div>
+      <div class="pi-type">${p.project_type==='website'?'Sitio Web':'Meta Ads'}</div>
+      <div class="pi-status">${STATUS[p.status]?.label||''}</div>
+    </div>`;
+  }).join('');
+}
+window.selectProj=async(id)=>{
+  currentId=id;currentData={...allProjects[id]};
+  renderList();renderEditor(currentData);
+  hide('admin-welcome');show('admin-ed');
+};
+function renderEditor(p){
+  document.getElementById('ed-type').textContent=p.project_type==='website'?'Sitio Web':'Meta Ads';
+  document.getElementById('ed-proj-name').textContent=p.project_name;
+  document.getElementById('ed-client').textContent=`Cliente: ${p.client_name} · ${p.client_email}`;
+  document.getElementById('ed-status').value=p.status||'proceso';
+  document.getElementById('ed-start').value=p.start_date||'';
+  document.getElementById('ed-delivery').value=p.delivery_date||'';
+  document.getElementById('ed-prog').value=p.progress||0;
+  document.getElementById('ed-prog-val').textContent=(p.progress||0)+'%';
+  document.getElementById('ed-notes').value=p.notes||'';
+  const stages=STAGES[p.project_type]||STAGES.website;
+  const ss=p.stages||{};
+  document.getElementById('ed-stages').innerHTML=stages.map((s,i)=>{
+    const done=ss[`s${i}`]===true;
+    return`<div class="se-item ${done?'done':''}" onclick="toggleStage(${i})" id="se-${i}">
+      <div class="se-check"><svg viewBox="0 0 11 11" fill="none"><path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="se-num">0${i+1}</span><span>${s}</span>
+    </div>`;
+  }).join('');
+  renderAddedFiles(p.files||[]);
+  document.getElementById('save-fb').className='fb';
+}
+window.toggleStage=(i)=>{
+  if(!currentData)return;
+  if(!currentData.stages)currentData.stages={};
+  currentData.stages[`s${i}`]=!currentData.stages[`s${i}`];
+  const el=document.getElementById(`se-${i}`);
+  el.classList.toggle('done',currentData.stages[`s${i}`]);
+};
+function renderAddedFiles(files){
+  const el=document.getElementById('added-files');
+  if(!files.length){el.innerHTML='';return;}
+  el.innerHTML=files.map((f,i)=>`
+    <div class="af-row">
+      <div style="flex:1;min-width:0;">
+        <div class="af-name">${fileIcon(f.name)} ${f.name}</div>
+        <div class="af-url">${f.url}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="removeFile(${i})" style="color:var(--error);flex-shrink:0;">✕</button>
+    </div>`).join('');
+}
+window.addFileLink=()=>{
+  const url=document.getElementById('new-file-url').value.trim();
+  const name=document.getElementById('new-file-name').value.trim()||'Archivo';
+  if(!url)return;
+  if(!currentData)return;
+  if(!currentData.files)currentData.files=[];
+  currentData.files.push({name,url,date:new Date().toLocaleDateString('es-CL')});
+  renderAddedFiles(currentData.files);
+  document.getElementById('new-file-url').value='';
+  document.getElementById('new-file-name').value='';
+};
+window.removeFile=(i)=>{
+  if(!currentData?.files)return;
+  currentData.files.splice(i,1);
+  renderAddedFiles(currentData.files);
+};
+window.saveProject=async()=>{
+  if(!currentId||!currentData)return;
+  setSp('save-sp',true);
+  document.getElementById('save-btn').disabled=true;
+  currentData.status=document.getElementById('ed-status').value;
+  currentData.start_date=document.getElementById('ed-start').value;
+  currentData.delivery_date=document.getElementById('ed-delivery').value;
+  currentData.progress=parseInt(document.getElementById('ed-prog').value);
+  currentData.notes=document.getElementById('ed-notes').value;
+  const{error}=await sb.from('projects').upsert(currentData);
+  setSp('save-sp',false);
+  document.getElementById('save-btn').disabled=false;
+  if(error){setFb('save-fb','Error al guardar.','err');return;}
+  allProjects[currentId]=currentData;
+  renderList();
+  setFb('save-fb','✓ Guardado correctamente.','ok');
+  setTimeout(()=>{document.getElementById('save-fb').className='fb';},4000);
+};
+window.cancelEdit=()=>{
+  currentId=null;currentData=null;
+  hide('admin-ed');show('admin-welcome');
+  renderList();
+};
+window.deleteProject=async()=>{
+  if(!currentId)return;
+  if(!confirm(`¿Eliminar el proyecto de ${currentData.client_name}? No se puede deshacer.`))return;
+  await sb.from('projects').delete().eq('id',currentId);
+  delete allProjects[currentId];
+  currentId=null;currentData=null;
+  hide('admin-ed');show('admin-welcome');
+  renderList();
+};
+
+// ── MODAL ──
+window.openModal=()=>document.getElementById('modal').classList.add('open');
+window.closeModal=()=>{
+  document.getElementById('modal').classList.remove('open');
+  ['nc-name','nc-email','nc-project'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('create-fb').className='fb';
+};
+window.createProject=async()=>{
+  const name=document.getElementById('nc-name').value.trim();
+  const email=document.getElementById('nc-email').value.trim();
+  const proj=document.getElementById('nc-project').value.trim();
+  const type=document.getElementById('nc-type').value;
+  if(!name||!email||!proj){setFb('create-fb','Completa todos los campos.','err');return;}
+  setSp('create-sp',true);
+  document.getElementById('create-btn').disabled=true;
+  const stages={};
+  (STAGES[type]||STAGES.website).forEach((_,i)=>{stages[`s${i}`]=false;});
+  const newProj={
+    id:`proj_${Date.now()}`,
+    client_name:name,client_email:email,
+    project_name:proj,project_type:type,
+    status:'proceso',progress:0,
+    start_date:'',delivery_date:'',
+    stages,notes:'',files:[]
+  };
+  const{error}=await sb.from('projects').insert(newProj);
+  setSp('create-sp',false);
+  document.getElementById('create-btn').disabled=false;
+  if(error){setFb('create-fb','Error al crear. Verifica que el correo esté creado en Supabase Auth.','err');return;}
+  allProjects[newProj.id]=newProj;
+  renderList();closeModal();
+  await selectProj(newProj.id);
+};
+
+// Close modal on bg click
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+</script>
+</body>
+</html>
