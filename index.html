@@ -310,13 +310,28 @@ async function checkSession(){
 
 async function handleSession(ses){
   try{
+    console.log('handleSession uid:', ses.user.id);
     const{data:prof,error}=await sb.from('profiles').select('*').eq('id',ses.user.id).single();
-    if(error||!prof){pg('pg-login');return;}
+    console.log('profile result:', prof, 'error:', error);
+    if(error){
+      ssp('login-sp',false);
+      document.getElementById('login-btn').disabled=false;
+      sfb('login-fb','Error al cargar perfil: '+error.message,'err');
+      return;
+    }
+    if(!prof){
+      ssp('login-sp',false);
+      document.getElementById('login-btn').disabled=false;
+      sfb('login-fb','Perfil no encontrado. Contacta a soporte.','err');
+      return;
+    }
     if(prof.role==='admin'){await loadAdmin();}
     else{await loadClient(prof,ses.user);}
   }catch(e){
     console.error('Profile error:',e);
-    pg('pg-login');
+    ssp('login-sp',false);
+    document.getElementById('login-btn').disabled=false;
+    sfb('login-fb','Error: '+e.message,'err');
   }
 }
 
